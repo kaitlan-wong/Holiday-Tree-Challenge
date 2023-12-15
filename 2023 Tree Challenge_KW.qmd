@@ -1,0 +1,290 @@
+---
+title: "R&D Tree Challenge"
+author: "Kaitlan Wong, based on Coda Rayo-Garza's original code"
+format: html
+editor: visual
+---
+
+## A Fun Holiday Tree Challenge!
+
+As part of a holiday message I would like us to send to the rest of staff, I would like for us to try and design our own little meRry tRees! (See what I did there...with the "R"?)
+
+My challenge to YOU is this: Finish and modify the code to create your very own beautiful holiday tree. Spruce it up however you want! Once you are done, I will create a collage of our trees and send it to the rest of staff on our behalf :)
+
+# *Happy Coding!*
+
+```{r}
+
+htmltools::tags$img(src = "https://media.giphy.com/media/KJnRyHxozhRoRePKgj/giphy-downsized-large.gif", alt = "Embedded GIF")
+
+```
+
+Here's the basic code to get you started:
+
+```{r}
+
+
+tree_challenge <- function(levels, ornaments) {
+  plot(1, type = "n", axes = FALSE, xlab = "", ylab = "", xlim = c(0, 10), ylim = c(0, 10))
+
+  # Draw the tree
+  polygon(c(5, 2, 8), c(9, 3, 3), col = "forestgreen", border = NA)
+
+  # Levels
+  for (i in 1:levels) {
+    x <- rep(5, i)
+    y <- seq(8, 8 - (i - 1), length.out = i)
+    points(x, y, pch = 22, col = "darkgreen", bg = "darkgreen", cex = 2)
+  }
+
+  # Draw the ornaments
+  set.seed(42)  
+  ornament_colors <- sample(colors(), ornaments, replace = TRUE)
+  ornament_positions <- matrix(c(runif(ornaments, 3, 7), runif(ornaments, 4, 8)), ncol = 2)
+  points(ornament_positions, pch = 16, col = ornament_colors, cex = 1.5)
+
+
+  
+#NEXT STEPS...Give this tree some pizzaz! 
+  #1. Add a trunk to the tree
+
+  #2. Add a star at the top of the tree??
+  
+  #3. Make it your own! Winner gets a prize(?)
+  
+}
+
+tree_challenge(levels = 5, ornaments = 20)
+
+```
+
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+
+# Kaitlan's Trees
+
+1.  **Based on Coda's code:**
+
+```{r}
+
+# Load the required packages
+library(ggplot2)
+library(png)
+library(grid)
+
+# Helper function to check if a point is inside a polygon
+point.in.polygon <- function(x, y, poly.x, poly.y) {
+  n <- length(poly.x)
+  inside <- FALSE
+  for (i in 1:n) {
+    j <- i %% n + 1
+    if ((poly.y[i] > y) != (poly.y[j] > y) &&
+      (x < (poly.x[j] - poly.x[i]) * (y - poly.y[i]) / (poly.y[j] - poly.y[i]) + poly.x[i])) {
+      inside <- !inside
+    }
+  }
+  return(inside)
+}
+
+tree_challenge <- function(levels, ornaments, snowflakes) {
+  # Define a function to generate valid ornament positions within the green tree area
+  generate_valid_positions <- function(n, polygon) {
+    positions <- data.frame(x = numeric(n), y = numeric(n))
+    for (i in 1:n) {
+      repeat {
+        positions[i, ] <- c(runif(1, min(polygon$x), max(polygon$x)),
+                            runif(1, min(polygon$y), max(polygon$y)))
+        if (point.in.polygon(positions[i, "x"], positions[i, "y"], polygon$x, polygon$y)) {
+          break
+        }
+      }
+    }
+    return(positions)
+  }
+
+  # Create a ggplot object
+  p <- ggplot() +
+    theme_void() +  # Remove axes and labels
+
+    # Draw the snowflakes
+    geom_point(data = data.frame(x = runif(snowflakes, 0, 10), y = runif(snowflakes, 0, 10)),
+               aes(x, y), pch = 42, col = "white", size = 1.5, alpha = 0.7) +
+
+    # Draw the tree
+    geom_polygon(aes(x = c(5, 2, 8), y = c(9, 3, 3)), fill = "forestgreen") +
+
+    # Draw the levels
+    lapply(1:levels, function(i) {
+      geom_point(aes(x = 5, y = 8 - (i - 1)), pch = 22, col = "forestgreen", size = 4)
+    }) +
+
+    # Draw the ornaments with valid positions
+    geom_point(data = generate_valid_positions(ornaments, data.frame(x = c(5, 2, 8), y = c(9, 3, 3))),
+               aes(x, y), pch = 16, col = sample(c("red", "white"), ornaments, replace = TRUE), size = 3) +
+
+    # Draw the star
+    geom_path(data = data.frame(x = c(5, 4.8, 5.2, 5, 5, 5),
+                                y = c(9.5, 9.2, 9.2, 9, 9.4, 9.4)),
+              aes(x = x, y = y), col = "#FFD700", size = 1.5) +
+
+    # Draw the trunk
+    geom_rect(aes(xmin = 4.5, xmax = 5.5, ymin = 0, ymax = 3), fill = "saddlebrown") +
+
+    # Add text
+    annotate("text", x = 5, y = 1, label = "Happy Holidays from the Every Texan Research & Data Team!",
+             color = "white", size = 6, fontface = 2, hjust = 0.5)
+
+  # Save the ggplot object as an image
+  ggsave("tree_challenge.png", plot = p, width = 8, height = 6, units = "in", bg = "lightcoral")
+
+  # Display the saved image
+  img <- readPNG("KWong_tree_challenge.png")
+  grid.raster(img)
+}
+
+# Call the function to generate, save, and display the image
+tree_challenge(levels = 5, ornaments = 100, snowflakes = 100)
+
+
+```
+
+## **Alternative options:**
+
+2.  **Cute Little Basic Star Tree (lol)**
+
+```{r}
+
+# Function to draw a Christmas tree
+draw_christmas_tree <- function(height) {
+  for (i in 1:height) {
+    cat(paste(rep(" ", height - i), collapse = ""))
+    cat(paste(rep("*", 2 * i - 1), collapse = ""))
+    cat("\n")
+  }
+  # Draw the tree trunk
+  trunk_height <- max(1, floor(height / 3))
+  for (i in 1:trunk_height) {
+    cat(paste(rep(" ", height - 1), collapse = ""))
+    cat("|\n")
+  }
+}
+
+# Set the height of the Christmas tree
+tree_height <- 7
+
+# Draw the Christmas tree
+draw_christmas_tree(tree_height)
+
+```
+
+3.  **Tiered Tree**
+
+Source: <https://stackoverflow.com/questions/74508343/is-there-a-simple-way-to-draw-a-graph-in-christmas-tree-farm-in-r/>
+
+```{r}
+
+library(ggplot2)
+
+tree <- data.frame(x = c(-5, 5, 2, 4, 1.5, 3, 0, -3, -1.5, -4, -2, -5, 
+                         -0.75, 0.75, 0.75, -0.75),
+                   y = c(1, 1, 3, 3, 5, 5, 7, 5, 5, 3, 3, 1, 0, 0, 1, 1),
+                   part = rep(c("branches", "trunk"), times = c(12, 4))) 
+
+baubles <- data.frame(x = c(-1.9, -2.4, 0.5, -0.3, -0.2, -1.3, 0.5, 
+                            1.2, -2.2, -1, 1.7, -1.4, -1.4, 0.4, 2.1, 0.4, 
+                            -0.8, -3.3, 0.5, -2.2, -0.1, -1.5, 2, 3.9, 1.3, 
+                            -1.7, 3.7, 2.8, 1, -0.1, 3.8, -2.9, -1.9, -1.7,
+                            -2.6, -2.3, 0.9, 1, -0.4, 1.5, 1.8, -0.5, -1.4, 
+                            -0.4, -0.5, -0.9, -1.7, 0.7, 1.6, 1.2, -0.4, 1, 
+                            0.8, 2.3, -2.5, -2, -2.9, -1.4, -1.1, 0.2),
+                      y = c(3, 3.3, 1.2, 4.4, 5.1, 5.2, 1.1, 6, 1.5, 2.4, 1.2,
+                            5.4, 2.2, 3.4, 3.4, 3.8, 3.1, 1.2, 4.3, 
+                            1.6, 2.4, 5.4, 4.5, 1.1, 1.3, 5, 1.5, 1.9, 1.7, 
+                            5.4, 1.3, 1.1, 2.2, 4, 1.8, 2, 4.6, 1.1, 5.9, 4.4, 
+                            2, 1.5, 2, 1.2, 5.3, 3.6, 3.5, 4.5, 5.8, 3, 2.7, 
+                            5.3, 3.1, 1.7, 1.6, 2.8, 3.6, 2.2, 2.8,  1.7),
+                      color = sample(c("white", "darkolivegreen2", "deeppink"), 60, TRUE))
+
+library(ggplot2)
+
+ggplot(tree, aes(x, y)) + 
+  geom_polygon(aes(fill = part)) +
+  geom_point(data = baubles, aes(color = color), size = 4) +
+  scale_fill_manual(values = c("green4", "brown4"), name = "Parts of tree") +
+  scale_color_identity(guide = guide_legend(), labels = c("green bauble",
+                       "pink bauble", "white bauble"), name = "Decorations") +
+  theme_minimal(base_size = 20)
+
+# Save the ggplot as an image
+ggsave("KWong_tree_challenge_2.png")
+```
+
+4.  **Tree with gifts**
+
+Source: <https://t-redactyl.io/blog/2016/12/a-very-ggplot2-christmas.html/>
+
+```{r}
+
+library(ggplot2)
+
+# Read in the base Christmas tree data
+ChristmasTree <- read.csv("C:\\Users\\kaitl\\Documents\\Every Texan\\R\\Christmas Tree Staff Holiday Card 2023\\Christmas tree base data.csv")
+
+# Generate the "lights"
+Desired.Lights <- 50
+Total.Lights <- sum(round(Desired.Lights * 0.35) + round(Desired.Lights * 0.20) + 
+                      round(Desired.Lights * 0.17) + round(Desired.Lights * 0.13) +
+                      round(Desired.Lights * 0.10) + round(Desired.Lights * 0.05))
+
+Lights <- data.frame(Lights.X = c(round(runif(round(Desired.Lights * 0.35), 4, 18), 0),
+                                       round(runif(round(Desired.Lights * 0.20), 5, 17), 0),
+                                       round(runif(round(Desired.Lights * 0.17), 6, 16), 0),
+                                       round(runif(round(Desired.Lights * 0.13), 7, 15), 0),
+                                       round(runif(round(Desired.Lights * 0.10), 8, 14), 0),
+                                       round(runif(round(Desired.Lights * 0.05), 10, 12), 0)))
+Lights$Lights.Y <- c(round(runif(round(Desired.Lights * 0.35), 4, 6), 0),
+                          round(runif(round(Desired.Lights * 0.20), 7, 8), 0),
+                          round(runif(round(Desired.Lights * 0.17), 9, 10), 0),
+                          round(runif(round(Desired.Lights * 0.13), 11, 12), 0),
+                          round(runif(round(Desired.Lights * 0.10), 13, 14), 0),
+                          round(runif(round(Desired.Lights * 0.05), 15, 17), 0))
+Lights$Lights.Colour <- c(round(runif(Total.Lights, 1, 4), 0))
+
+# Generate the "baubles"
+Baubles <- data.frame(Bauble.X = c(6, 9, 15, 17, 5, 13, 16, 7, 10, 14, 7, 9, 11, 
+                                   14, 8, 14, 9, 12, 11, 12, 14, 11, 17, 10))
+Baubles$Bauble.Y <- c(4, 5, 4, 4, 5, 5, 5, 6, 6, 6, 8, 8, 8, 8, 10,
+                      10, 11, 11, 12, 13, 10, 16, 7, 14)
+Baubles$Bauble.Colour <- factor(c(1, 2, 2, 3, 2, 3, 1, 3, 1, 1, 1, 2, 1, 2,
+                                  3, 3, 2, 1, 3, 2, 1, 3, 3, 1))
+Baubles$Bauble.Size <- c(1, 3, 1, 1, 2, 1, 2, 2, 2, 1, 1, 1, 3, 3, 3,
+                         2, 3, 1, 1, 2, 2, 3, 3, 2)
+
+# Generate the plot
+ggplot() + 
+  geom_tile(data = ChristmasTree, aes(x = Tree.X, y = Tree.Y, fill = Tree.Colour)) +
+  scale_fill_identity() + 
+  geom_point(data = Lights, aes(x = Lights.X, y = Lights.Y, alpha = Lights.Colour),
+             colour = "lightgoldenrodyellow", shape = 16) +
+  geom_point(data = Baubles, aes(x = Bauble.X, y = Bauble.Y, colour = Bauble.Colour, size = Bauble.Size),
+             shape = 16) +
+  scale_colour_manual(values = c("deeppink3", "gold", "plum1")) +
+  scale_size_area(max_size = 12) +
+  theme_bw() +
+  scale_x_continuous(breaks = NULL) + 
+  scale_y_continuous(breaks = NULL) +
+  geom_segment(aes(x = 2.5, xend = 4.5, y = 1.5, yend = 1.5), colour = "deeppink3", size = 2) +
+  geom_segment(aes(x = 5.5, xend = 8.5, y = 1.5, yend = 1.5), colour = "plum1", size = 2) +
+  geom_segment(aes(x = 13.5, xend = 16.5, y = 1.5, yend = 1.5), colour = "deeppink3", size = 2) +
+  geom_segment(aes(x = 17.5, xend = 19.5, y = 1.5, yend = 1.5), colour = "plum1", size = 2) +
+  geom_segment(aes(x = 3.5, xend = 3.5, y = 0.5, yend = 2.5), colour = "deeppink3", size = 2) +
+  geom_segment(aes(x = 7.0, xend = 7.0, y = 0.5, yend = 2.5), colour = "plum1", size = 2) +
+  geom_segment(aes(x = 15.0, xend = 15.0, y = 0.5, yend = 2.5), colour = "deeppink3", size = 2) +
+  geom_segment(aes(x = 18.5, xend = 18.5, y = 0.5, yend = 2.5), colour = "plum1", size = 2) +
+  annotate("text", x = 11, y = 20, label = "Happy Holidays!", family = "Rage Italic",
+           size = 12) +
+  labs(x = "", y = "") +
+  theme(legend.position = "none")
+
+# Save the ggplot as an image
+ggsave("KWong_tree_challenge_3.png")
+```
